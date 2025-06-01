@@ -32,6 +32,14 @@
   import packageJSON from '../../package.json' with { type: 'json' }
   ```
 
+## Setup [Turso](https://turso.tech/) - SQLite database in the cloud before we deploy the code
+
+- Go to Turso website -> Create Group -> Create Database -> Create Token -> get the remote url and token
+
+- Set up remote url and token in the .env file
+
+- Add Turso driver in drizzle.config.ts file
+
 ## Endpoints
 
 | Path               | Description              |

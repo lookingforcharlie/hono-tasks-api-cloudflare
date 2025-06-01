@@ -3,12 +3,14 @@ import { defineConfig } from 'drizzle-kit'
 import env from '@/env'
 
 export default defineConfig({
-  dialect: 'sqlite',
+  // dialect: 'sqlite', // this is for local sqlite
+  dialect: 'turso',
   schema: './src/db/schema.ts',
   out: './src/db/migrations',
   dbCredentials: {
     url: env.DATABASE_URL,
-    token: env.DATABASE_AUTH_TOKEN,
+    // token: env.DATABASE_AUTH_TOKEN, // this is for local sqlite
+    authToken: env.DATABASE_AUTH_TOKEN,
   },
 })
 

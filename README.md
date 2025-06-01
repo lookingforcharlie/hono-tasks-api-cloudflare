@@ -10,7 +10,27 @@
   pn build
   ```
 
-- Install to support import alias, and convert it into relative path when build. import alias only supported by TS
+- Install tsc-alias to support import alias, and convert it into relative path when build and add file extension, 'import alias' only supported by TS
+
+  ```
+  pnpm install -D tsc-alias
+  ```
+
+- Update script with tsc-alias
+
+  ```
+  "build": "tsc && tsc-alias",
+  "start": "node ./dist/src/index.js",
+  ```
+
+- update code
+
+  ```
+  change:
+  import packageJSON from '../../package.json'
+  in codebase to:
+  import packageJSON from '../../package.json' with { type: 'json' }
+  ```
 
 ## Endpoints
 

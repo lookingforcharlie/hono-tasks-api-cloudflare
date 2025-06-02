@@ -2,6 +2,7 @@
 .yarn/
 !.yarn/releases
 .vscode/*
+!.vscode/settings.json
 !.vscode/launch.json
 !.vscode/*.code-snippets
 .idea/workspace.xml
@@ -45,3 +46,5 @@ dist
 
 # turso cli files
 dev.db*
+
+.wrangler/

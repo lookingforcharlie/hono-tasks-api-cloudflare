@@ -2,9 +2,13 @@ import type { OpenAPIHono, RouteConfig, RouteHandler } from '@hono/zod-openapi'
 import type { Schema } from 'hono'
 import type { PinoLogger } from 'hono-pino'
 
+import type { Environment } from '../env'
+
 // let hono app knows that there are other variables have been set
 // https://hono.dev/docs/api/hono#generics
 interface CustomAppBindings {
+  // Hono's type system is designed to map the Bindings property of the generic type parameter to the type of c.env.
+  Bindings: Environment
   Variables: {
     logger: PinoLogger
     slogan: 'hono rocks' // you can customize any variable, and c.var will have it: c.var.slogan

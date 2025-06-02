@@ -1,7 +1,9 @@
 import { defineConfig } from 'drizzle-kit'
 
-import env from '@/env'
+import env from '@/env-runtime'
 
+// The code doesn't run in Cloudflare workers, it only runs locally to create table in drizzle studio
+// create env-runtime.ts file to fix running drizzle studio
 export default defineConfig({
   // dialect: 'sqlite', // this is for local sqlite
   dialect: 'turso',

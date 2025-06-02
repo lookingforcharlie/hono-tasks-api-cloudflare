@@ -134,4 +134,29 @@ Two new files are created by Turso Cli, we need to put them into .gitignore file
 "deploy": "wrangler deploy --minify",
 ```
 
--
+- Make sure you have Cloudflare account
+
+```
+pnpm run deploy
+```
+
+- Your API doesn't fully function right now, because the env is missing in the Cloudflare
+
+- Setup the env in [Cloudflare](https://developers.cloudflare.com/workers/configuration/environment-variables/)
+
+  > Cloudflare dashboard -> Compute (Workers) -> Click the project -> Settings -> Variables and Secrets -> add Node_Env, log_level, database_url, database_auth_token -> click Deploy
+
+- Run 'pnpm run deploy' locally again, you will see:
+
+```
+▲ [WARNING] You are about to publish a Workers Service that was last published via the Cloudflare Dashboard.
+
+  Edits that have been made via the dashboard will be overridden by your local code and config.
+
+✔ Would you like to continue? … no
+```
+
+- Choose 'no', we don't want this override, we want Wrangler keep variables configured in the dashboard on deploy.
+
+- Add 'keep_vars = true' in wrangler.toml file
+  > The env we added in Cloudflare dashboard will not override when we run the local deployment

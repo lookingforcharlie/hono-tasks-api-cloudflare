@@ -39,3 +39,9 @@ coverage-*.json
 
 .vercel
 dist
+
+# env files for Cloudflare local development
+.dev.vars
+
+# turso cli files
+dev.db*

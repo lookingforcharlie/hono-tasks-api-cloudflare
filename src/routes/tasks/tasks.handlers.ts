@@ -2,12 +2,22 @@ import { eq } from 'drizzle-orm'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
-import db from '@/db'
+import { createDbClient } from '@/db'
 import { tasks } from '@/db/schema'
 import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from '@/lib/constants'
 
 import type { AppRouteHandler } from '../../lib/types'
-import type { CreateRoute, DeleteByIdRoute, GetOneByIdRoute, ListRoute, PatchByIdRoute } from './tasks.routes'
+import type {
+  CreateRoute,
+  DeleteByIdRoute,
+  GetOneByIdRoute,
+  ListRoute,
+  PatchByIdRoute,
+} from './tasks.routes'
+
+// Each router creates a new instance of the db client
+// That's how Cloudflare workers works, because it's a serverless platform, each request is a serverless function that gets called
+// and each time it gets called, it creates a new instance of the db client
 
 // Create route handler
 // ListRoute is the RouteConfig created in the tasks.routes.ts file
@@ -15,6 +25,7 @@ export const list: AppRouteHandler<ListRoute> = async (c) => {
   c.var.logger.info('Listing tasks')
 
   // query the database
+  const { db } = createDbClient(c.env)
   const tasks = await db.query.tasks.findMany()
   return c.json(tasks, HttpStatusCodes.OK)
 }
@@ -29,6 +40,7 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const task = c.req.valid('json')
   // returning() returns the array of inserted rows, even if it's only one row
   // [insertedTask]: array destructuring takes the first element of the array, because it's guaranteed to be one row here, insertedTask is always the inserted row
+  const { db } = createDbClient(c.env)
   const [insertedTask] = await db.insert(tasks).values(task).returning()
   return c.json(insertedTask, HttpStatusCodes.OK)
 }
@@ -36,13 +48,17 @@ export const create: AppRouteHandler<CreateRoute> = async (c) => {
 export const getOneById: AppRouteHandler<GetOneByIdRoute> = async (c) => {
   // the code will never reach this point if the id is invalid
   const params = c.req.valid('param') // we can also destructure the id: { id: number }
+  const { db } = createDbClient(c.env)
   const task = await db.query.tasks.findFirst({
     where(fields, operator) {
       return operator.eq(fields.id, params.id) // fields here is the fields of the tasks table
     },
   })
   if (!task) {
-    return c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCodes.NOT_FOUND)
+    return c.json(
+      { message: HttpStatusPhrases.NOT_FOUND },
+      HttpStatusCodes.NOT_FOUND,
+    )
   }
   return c.json(task, HttpStatusCodes.OK)
 }
@@ -77,10 +93,18 @@ export const patchById: AppRouteHandler<PatchByIdRoute> = async (c) => {
   }
   // eq is a helper function from drizzle-orm, pass in the columns we are comparing and the value we are comparing it to
   // .returning() send back the full row(s) that were updated: return a list of updated rows, even if it's only one row
-  const [updatedTask] = await db.update(tasks).set(updates).where(eq(tasks.id, params.id)).returning()
+  const { db } = createDbClient(c.env)
+  const [updatedTask] = await db
+    .update(tasks)
+    .set(updates)
+    .where(eq(tasks.id, params.id))
+    .returning()
 
   if (!updatedTask) {
-    return c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCodes.NOT_FOUND)
+    return c.json(
+      { message: HttpStatusPhrases.NOT_FOUND },
+      HttpStatusCodes.NOT_FOUND,
+    )
   }
 
   return c.json(updatedTask, HttpStatusCodes.OK)
@@ -96,10 +120,14 @@ export const deleteById: AppRouteHandler<DeleteByIdRoute> = async (c) => {
   // rows: [],
   // rowsAffected: 0,
   // lastInsertRowid: 0n }
+  const { db } = createDbClient(c.env)
   const result = await db.delete(tasks).where(eq(tasks.id, params.id)) // safely returns parsed and validated request body (JSON) and gives you { name?: string, done?: boolean }
 
   if (result.rowsAffected === 0) {
-    return c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCodes.NOT_FOUND)
+    return c.json(
+      { message: HttpStatusPhrases.NOT_FOUND },
+      HttpStatusCodes.NOT_FOUND,
+    )
   }
   return c.body(null, HttpStatusCodes.NO_CONTENT) // 204
 }

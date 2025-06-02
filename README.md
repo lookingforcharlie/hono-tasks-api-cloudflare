@@ -2,6 +2,18 @@
 
 - [Inspired by](https://www.youtube.com/watch?v=QDgdUtd6ZRs)
 
+## Endpoints
+
+| Path               | Description              |
+| ------------------ | ------------------------ |
+| GET /doc           | Open API Specification   |
+| GET /reference     | Scalar API Documentation |
+| GET /tasks         | List all tasks           |
+| POST /tasks        | Create a task            |
+| GET /tasks/{id}    | Get one task by id       |
+| PATCH /tasks/{id}  | Patch one task by id     |
+| DELETE /tasks/{id} | Delete one task by id    |
+
 ## Setup
 
 - Build the project first
@@ -40,92 +52,86 @@
 
 - Add Turso driver in drizzle.config.ts file
 
-## Endpoints
+## Prepare for Deployment to Cloudflare
 
-| Path               | Description              |
-| ------------------ | ------------------------ |
-| GET /doc           | Open API Specification   |
-| GET /reference     | Scalar API Documentation |
-| GET /tasks         | List all tasks           |
-| POST /tasks        | Create a task            |
-| GET /tasks/{id}    | Get one task by id       |
-| PATCH /tasks/{id}  | Patch one task by id     |
-| DELETE /tasks/{id} | Delete one task by id    |
+> In Cloudflare, whenever you are working with environment variables or secrets, those are only accessible inside of the request, inside of the [fetch event handler](https://developers.cloudflare.com/workers/runtime-apis/handlers/fetch/), and this is the only way you can get access to environment variables.
 
-## tsconfig.json
+> In the original codebase of env.ts file, we use env = EnvSchema.parse(process.env) to access the env, it's not gonna work with Cloudflare
 
-- import with an alias, no need to do relative imports
+> To fix it, we will setup a runtime env so that way our local build tools need to use the env can work in the same way, but all of the request handlers are going to need to pull in those environment variables from the incoming requests
+
+- Wrangler: Cloudflare CLI tool that allows us to test locally and easily deploy
+
   ```
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-  ```
-- we can do "import app from './app';" when
-  ```
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-  ```
-- Vercel doesn't support "paths": { "@/_": ["./src/_"] }
-
-## Install Eslint: [@antfu/eslint-config:](https://github.com/antfu/eslint-config)
-
-- pnpm dlx @antfu/eslint-config@latest
-- pick formatter
-
-## [Install hono openapi](https://github.com/honojs/middleware/tree/main/packages/zod-openapi)
-
-- ```
-  pn i hono zod @hono/zod-openapi
+  pnpm add -D wrangler@latest
   ```
 
-## [stoker](https://www.npmjs.com/package/stoker?activeTab=readme): [source code](https://github.com/w3cj/stoker/tree/main)
+- Wrangler toml file: [honojs starter](https://github.com/honojs/starter)
 
-- CJ's package for this hono project
+- Run Wrangler locally to see if it will work in Cloudflare
+  ```
+  pn run dev ("dev": "wrangler dev")
+  ```
+- Setup secrets for Cloudflare workers for local development is by [creating .dev.vars file](https://developers.cloudflare.com/workers/configuration/secrets/#local-development-with-secrets)
 
-## [Pino](https://www.npmjs.com/package/hono-pino): sophisticated logger
+- For local development of using wrangler, we need to spin up libSql instance using Turso dev command
+  > We could put Turso url and token in the .dev.vars file, but in that case, I will be modifying production Turso database directly when working locally
 
-## [pino-pretty](https://www.npmjs.com/package/pino-pretty): make pino logger more readable
+> To solve this, we can use [Turso CLI](https://docs.turso.tech/local-development) dev command, which gives us a local host database url we can pass in .dev.vars
 
-## [zod](https://zod.dev/?id=table-of-contents): provide run-time type validation
-
-## [Scalar for Hono](https://www.npmjs.com/package/@scalar/hono-api-reference)
-
-## [Zod to OpenAPI](https://www.npmjs.com/package/@asteasolutions/zod-to-openapi)
-
-- We need this library for using jsonContentOneOf helper function from stoker to turn anyOf to oneOf
-
-- Alternative for Swagger UI
-
-## [Drizzle ORM - SqLite -Turso](https://orm.drizzle.team/docs/tutorials/drizzle-with-turso)
+Install Turso CLI on your Mac if needed
 
 ```
-pnpm add drizzle-orm @libsql/client
-pnpm add -D drizzle-kit
+brew install tursodatabase/tap/turso
 ```
 
-- The lib Sql client that Turso provide can actually talk to a file on your local machine.
-- So when we are running in Dev mode, we can talk to a sqlite database living in the same folder
-- When we deploy, we can create an Turso instance and then set our environment variable to be that endpoint
+Install Turso as dev dependency
 
-## LibSQL
+```
+pnpm add -D turso
+```
 
-- LibSQL is a fork of SQLite that offers a bit more functionality compared to standard SQLite
-- libSQL can connect to both SQLite files and Turso remote databases
+Run pn drizzle-kit push, you will see dev.db is created locally in the root
 
-## [Drizzle zod](https://orm.drizzle.team/docs/zod)
+```
+pn drizzle-kit push
+```
 
-- drizzle-zod is a plugin for Drizzle ORM that allows you to generate Zod schemas from Drizzle ORM schemas.
-- pnpm add drizzle-zod
+Update the script for running local turso libSql server, db name needs to align with the schema drizzle-kit push
 
-## [Hono Test](https://hono.dev/docs/guides/testing)
+```
+  "dev:db": "turso dev --db-file dev.db",
+```
 
-- Hono has request built-in method, doesn't need a separate library: router.request('url')
-- not like Express, you need superTest library
+Run
 
-## vitest
+```
+pnpm run dev:db
+```
 
-- pn i -D vitest
-- pn i -D @vitest/coverage-v8
-- "test": "vitest" in package.json: search the whole directory for any file that has the word 'test' inside of it
+You will see in the terminal:
 
-## Generate my tasks API SDK
+```
+sqld listening on port 8080.
+Use the following URL to configure your libSQL client SDK for local development:
+
+    http://127.0.0.1:8080
+```
+
+Put http://127.0.0.1:8080 into .dev.vars file
+
+```
+DATABASE_URL=http://127.0.0.1:8080
+```
+
+Two new files are created by Turso Cli, we need to put them into .gitignore file
+
+## Deployment to Cloudflare
+
+- Prepare deploy script in package.json
+
+```
+"deploy": "wrangler deploy --minify",
+```
+
+-

@@ -11,6 +11,8 @@ import type { AppOpenAPI, CustomAppBindings } from '@/lib/types'
 
 import { pinoLogger } from '@/middlewares/pino-logger'
 
+import { parseEnv } from '../env'
+
 // create a stand alone router instance with any middlewares
 export function createRouter() {
   // with strict set to false, /error and /error/ will be treated as the same path
@@ -26,6 +28,30 @@ export function createRouter() {
 // we can call this when testing
 export default function createApp() {
   const app = createRouter()
+
+  // having the middleware here that's the first thing that runs before any other middleware and handler
+  // c.env looks like this:
+  // {
+  //   NODE_ENV: 'development',
+  //   PORT: '9999',
+  //   LOG_LEVEL: 'debug',
+  //   DATABASE_URL: 'libsql://tasks.whatever.io',
+  //   DATABASE_AUTH_TOKEN: 'bGciOiJFZikwERTsI99nR5cNzVh'
+  // }
+  app.use((c, next) => {
+    // Validate the env
+    // c.env is all the built-in secrets and variables that get passed to your handler
+    // type of c.env can be set in CustomAppBindings
+
+    // c.env = parseEnv(c.env || process.env)
+    // eslint-disable-next-line node/no-process-env
+    c.env = parseEnv(Object.assign(c.env || {}, process.env))
+    // anywhere in the app, we need to use those environment variables, we can access it through c.env
+    // whenever we are running the code not inside Cloudflare, we still can access the env through process.env because we are doing c.env = parseEnv(Object.assign(c.env, process.env))
+    // if we are not running in Cloudflare, we need to use process.env, and c.env is empty object
+
+    return next()
+  })
 
   app.use(serveEmojiFavicon('⛲'))
   app.use(pinoLogger())

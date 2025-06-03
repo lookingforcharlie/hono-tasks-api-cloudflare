@@ -75,70 +75,71 @@
 - Setup secrets for Cloudflare workers for local development is by [creating .dev.vars file](https://developers.cloudflare.com/workers/configuration/secrets/#local-development-with-secrets)
 
 - For local development of using wrangler, we need to spin up libSql instance using Turso dev command
+
   > We could put Turso url and token in the .dev.vars file, but in that case, I will be modifying production Turso database directly when working locally
 
-> To solve this, we can use [Turso CLI](https://docs.turso.tech/local-development) dev command, which gives us a local host database url we can pass in .dev.vars
+  > To solve this, we can use [Turso CLI](https://docs.turso.tech/local-development) dev command, which gives us a local host database url we can pass in .dev.vars
 
-Install Turso CLI on your Mac if needed
+- Install Turso CLI on your Mac if needed
 
-```
-brew install tursodatabase/tap/turso
-```
+  ```
+  brew install tursodatabase/tap/turso
+  ```
 
-Install Turso as dev dependency
+- Install Turso as dev dependency
 
-```
-pnpm add -D turso
-```
+  ```
+  pnpm add -D turso
+  ```
 
-Run pn drizzle-kit push, you will see dev.db is created locally in the root
+- Run pn drizzle-kit push, you will see dev.db is created locally in the root
 
-```
-pn drizzle-kit push
-```
+  ```
+  pn drizzle-kit push
+  ```
 
-Update the script for running local turso libSql server, db name needs to align with the schema drizzle-kit push
+- Update the script for running local turso libSql server, db name needs to align with the schema drizzle-kit push
 
-```
-  "dev:db": "turso dev --db-file dev.db",
-```
+  ```
+    "dev:db": "turso dev --db-file dev.db",
+  ```
 
-Run
+- Run
 
-```
-pnpm run dev:db
-```
+  ```
+  pnpm run dev:db
+  ```
 
-You will see in the terminal:
+- You will see in the terminal:
 
-```
-sqld listening on port 8080.
-Use the following URL to configure your libSQL client SDK for local development:
+  ```
+  sqld listening on port 8080.
+  Use the following URL to configure your libSQL client SDK for local development:
 
-    http://127.0.0.1:8080
-```
+  http://127.0.0.1:8080
+  ```
 
-Put http://127.0.0.1:8080 into .dev.vars file
+- Put http://127.0.0.1:8080 into .dev.vars file
 
-```
-DATABASE_URL=http://127.0.0.1:8080
-```
+  ```
+  DATABASE_URL=http://127.0.0.1:8080
+  ```
 
-Two new files are created by Turso Cli, we need to put them into .gitignore file
+- Two new files are created by Turso Cli, we need to put them into .gitignore file
 
 ## Deployment to Cloudflare
 
 - Prepare deploy script in package.json
 
-```
-"deploy": "wrangler deploy --minify",
-```
+  ```
+  "deploy": "wrangler deploy --minify",
+  ```
 
 - Make sure you have Cloudflare account
 
-```
-pnpm run deploy
-```
+  ```
+  pnpm run deploy
+  ```
 
 - Your API doesn't fully function right now, because the env is missing in the Cloudflare
 
@@ -148,13 +149,13 @@ pnpm run deploy
 
 - Run 'pnpm run deploy' locally again, you will see:
 
-```
-▲ [WARNING] You are about to publish a Workers Service that was last published via the Cloudflare Dashboard.
+  ```
+  ▲ [WARNING] You are about to publish a Workers Service that was last published via the Cloudflare Dashboard.
 
-  Edits that have been made via the dashboard will be overridden by your local code and config.
+    Edits that have been made via the dashboard will be overridden by your local code and config.
 
-✔ Would you like to continue? … no
-```
+  ✔ Would you like to continue? … no
+  ```
 
 - Choose 'no', we don't want this override, we want Wrangler keep variables configured in the dashboard on deploy.
 

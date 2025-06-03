@@ -75,6 +75,7 @@
 - Setup secrets for Cloudflare workers for local development is by [creating .dev.vars file](https://developers.cloudflare.com/workers/configuration/secrets/#local-development-with-secrets)
 
 - For local development of using wrangler, we need to spin up libSql instance using Turso dev command
+
   > We could put Turso url and token in the .dev.vars file, but in that case, I will be modifying production Turso database directly when working locally
 
   > To solve this, we can use [Turso CLI](https://docs.turso.tech/local-development) dev command, which gives us a local host database url we can pass in .dev.vars
